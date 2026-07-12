@@ -18,3 +18,9 @@ Thumbs.db
 # 环境变量
 .env
 .env.local
+
+# Tencent Cloud EdgeOne
+.env
+.edgeone/*
+.tef_dist/*
+  

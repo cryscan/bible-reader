@@ -26,6 +26,18 @@ body {
   line-height: 2;
 }
 
+/* 全局确保文字可选中、可复制 */
+body,
+p,
+span,
+mark,
+sup,
+div {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 /* 滚动条美化 */
 ::-webkit-scrollbar {
   width: 6px;
