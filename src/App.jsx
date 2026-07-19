@@ -4,10 +4,61 @@ import BookList from './components/BookList'
 import ChapterList from './components/ChapterList'
 import ChapterReader from './components/ChapterReader'
 
+// ---- 书签 / 路由：localStorage 记忆 + URL hash 跨设备分享 ----
+const BOOKMARK_KEY = 'bible-last-read'
+
+function loadLastRead() {
+  try {
+    return JSON.parse(localStorage.getItem(BOOKMARK_KEY) || 'null')
+  } catch {
+    return null
+  }
+}
+
+function saveLastRead(state) {
+  try {
+    localStorage.setItem(BOOKMARK_KEY, JSON.stringify(state))
+  } catch {
+    // 忽略写入错误（如隐私模式）
+  }
+}
+
+// 解析 URL hash：#/  |  #/genesis  |  #/genesis/3
+function parseHash() {
+  const parts = window.location.hash.replace(/^#\/?/, '').split('/').filter(Boolean)
+  if (parts.length === 0) return null
+  const [bookId, chapterStr] = parts
+  const book = bibleData.find((b) => b.id === bookId)
+  if (!book) return null
+  if (chapterStr) {
+    const num = Number(chapterStr)
+    if (book.chapters.some((c) => c.number === num)) {
+      return { view: 'reader', bookId, chapterNumber: num }
+    }
+    return null
+  }
+  return { view: 'chapters', bookId, chapterNumber: null }
+}
+
+function buildHash(view, bookId, chapterNumber) {
+  if (!bookId) return '#/'
+  if (view === 'reader' && chapterNumber != null) return `#/${bookId}/${chapterNumber}`
+  return `#/${bookId}`
+}
+
+function getInitialState() {
+  return (
+    parseHash() ||
+    loadLastRead() ||
+    { view: 'books', bookId: null, chapterNumber: null }
+  )
+}
+
 export default function App() {
-  const [view, setView] = useState('books') // books | chapters | reader
-  const [bookId, setBookId] = useState(null)
-  const [chapterNumber, setChapterNumber] = useState(null)
+  const initial = getInitialState()
+  const [view, setView] = useState(initial.view)
+  const [bookId, setBookId] = useState(initial.bookId)
+  const [chapterNumber, setChapterNumber] = useState(initial.chapterNumber)
   const scrollRef = useRef(null)
 
   const currentBook = bibleData.find((b) => b.id === bookId) || null
@@ -18,6 +69,30 @@ export default function App() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0, behavior: 'auto' })
   }, [view, bookId, chapterNumber])
+
+  // 同步：URL hash（跨设备书签/分享）+ localStorage（同设备记忆）
+  useEffect(() => {
+    const hash = buildHash(view, bookId, chapterNumber)
+    if (window.location.hash !== hash) {
+      window.location.hash = hash
+    }
+    if (bookId) {
+      saveLastRead({ view, bookId, chapterNumber })
+    }
+  }, [view, bookId, chapterNumber])
+
+  // 监听 hash 变化：手动改 URL、浏览器前进/后退、跨标签页
+  useEffect(() => {
+    function onHashChange() {
+      const parsed = parseHash()
+      if (!parsed) return
+      setView(parsed.view)
+      setBookId(parsed.bookId)
+      setChapterNumber(parsed.chapterNumber)
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
 
   function openBook(id) {
     setBookId(id)
