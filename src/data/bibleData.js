@@ -3,6 +3,7 @@
 // 每章包含：写作背景、概括、主旨、意象、注释(可选)、经文
 // 经文采用中文和合本（CUV）风格译文
 import { isaiah } from './isaiah.js'
+import { jeremiah } from './jeremiah.js'
 
 export const bibleData = [
   {
@@ -184,6 +185,7 @@ export const bibleData = [
     ],
   },
   isaiah,
+  jeremiah,
   {
     id: 'john',
     name: '约翰福音',
