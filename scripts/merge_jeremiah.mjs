@@ -14,11 +14,11 @@ const chapters = raw.chapters.map((ch) => {
     number: ch.number,
     title: m.t,
     background: m.b,
+    verses: ch.verses,
     summary: m.s,
     theme: m.th,
     imagery: m.im,
     note: m.no,
-    verses: ch.verses,
   }
 })
 
